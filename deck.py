@@ -16,6 +16,32 @@ class Carta:
     def __init__(self, valor, palo):
         self.valor = valor
         self.palo = palo
+    def get_imagen_archivo(self):
+        """Retorna el nombre del archivo de imagen de la carta.
+
+        Formato: {valor}_of_{palo}.png
+        Ejemplo: ace_of_spades.png, 10_of_hearts.png
+        """
+        # Mapear valor a nombre de archivo
+        valor_map = {
+            'A': 'ace',
+            'J': 'jack',
+            'Q': 'queen',
+            'K': 'king'
+        }
+        valor_str = valor_map.get(self.valor, self.valor)
+
+        # Mapear palo a nombre en inglés
+        palo_map = {
+            'PICAS': 'spades',
+            'CORAZONES': 'hearts',
+            'DIAMANTES': 'diamonds',
+            'TRÉBOLES': 'clubs'
+        }
+        palo_str = palo_map.get(self.palo.name, 'unknown')
+
+        return f"{valor_str}_of_{palo_str}.png"
+
 
     def get_valor_numerico(self):
         """Retorna el valor numérico de la carta"""

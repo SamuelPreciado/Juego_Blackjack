@@ -212,7 +212,7 @@ class Juego:
 
     def obtener_estado_juego(self):
         """Retorna el estado actual del juego"""
-        return {
+        estado = {
             "fase": self.fase,
             "ronda_activa": self.ronda_activa,
             "jugadores": {
@@ -232,4 +232,24 @@ class Juego:
                 "estado": self.crupier.estado
             }
         }
+
+        # Añadir ranking basado en el dinero de los jugadores (descendente)
+        estado["ranking"] = self.obtener_ranking()
+
+        return estado
+
+    def obtener_ranking(self):
+        """Retorna una lista ordenada de jugadores por dinero (descendente).
+
+        Formato: [ { 'id': id, 'nombre': nombre, 'dinero': cantidad }, ... ]
+        """
+        ranking = sorted(
+            (
+                {"id": id_j, "nombre": j.nombre, "dinero": j.dinero}
+                for id_j, j in self.jugadores.items()
+            ),
+            key=lambda x: x["dinero"],
+            reverse=True
+        )
+        return ranking
 

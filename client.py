@@ -119,6 +119,15 @@ class ClienteBlackjack:
             print(f"{marcador} {jugador['nombre']}: {jugador['mano']}")
             print(f"   Estado: {jugador['estado']} | Apuesta: {jugador['apuesta']} | Dinero: {jugador['dinero']}")
 
+        # Mostrar ranking (si existe)
+        ranking = self.estado_juego.get('ranking')
+        if ranking:
+            print("\nRANKING: (por dinero)")
+            pos = 1
+            for item in ranking:
+                print(f"{pos}. {item['nombre']} - ${item['dinero']}")
+                pos += 1
+
         print("=" * 60)
 
     def mostrar_resultado_ronda(self, resultado, ganancia):
