@@ -21,34 +21,10 @@ class BlackjackGUI:
 
         self.root = tk.Tk()
         self.root.title("♠ BLACKJACK MULTIJUGADOR ♠")
-        self.root.geometry("1100x700")
-        self.root.configure(bg="#0b3d0b")
+        self.root.geometry("1400x900")
+        self.root.configure(bg="#1a1a1a")
 
-        self.setup_styles()
         self.create_widgets()
-
-    # =========================
-    # ESTILOS
-    # =========================
-
-    def setup_styles(self):
-
-        style = ttk.Style()
-
-        style.theme_use("clam")
-
-        style.configure(
-            "Casino.TButton",
-            font=("Arial", 14, "bold"),
-            padding=10
-        )
-
-        style.configure(
-            "Title.TLabel",
-            background="#0b3d0b",
-            foreground="gold",
-            font=("Arial", 26, "bold")
-        )
 
     # =========================
     # INTERFAZ
@@ -307,44 +283,148 @@ class BlackjackGUI:
     # ACTUALIZAR INTERFAZ
     # =========================
 
+    def _load_card_image(self, archivo_carta, width=120, height=180):
+        """Carga y redimensiona una imagen de carta desde el archivo."""
+        try:
+            ruta = os.path.join(self.cartas_path, archivo_carta)
+            if not os.path.exists(ruta):
+                return None
+            img = Image.open(ruta)
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+            return ImageTk.PhotoImage(img)
+        except Exception:
+            return None
+
     def update_game(self, estado):
+        # Actualizar cartas del crupier
+        self._update_dealer_cards(estado["crupier"])
 
-        crupier = estado["crupier"]
+        # Actualizar ranking
+        self._update_ranking(estado.get("ranking", []))
 
-        dealer_text = (
-            f"{crupier['mano']}\n"
-            f"Valor: {crupier['valor']}"
-        )
+        # Actualizar cartas de jugadores
+        self._update_players_cards(estado["jugadores"])
 
-        self.dealer_cards.config(text=dealer_text)
+    def _update_dealer_cards(self, crupier):
+        """Actualiza la visualización de cartas del crupier."""
+        self.dealer_canvas.delete("all")
 
-        self.players_text.delete(1.0, tk.END)
+        # Información del crupier
+        valor = crupier.get("valor", 0)
+        estado = crupier.get("estado", "esperando")
+        info_text = f"Valor: {valor} | Estado: {estado.upper()}"
+        self.dealer_info.config(text=info_text)
 
-        # Mostrar ranking si está presente
-        ranking = estado.get("ranking")
+        # Cargar y mostrar cartas del crupier
+        # Extraer cartas de la mano (formato: "2♥, K♠ (Valor: 12)")
+        mano_str = crupier.get("mano", "")
+        cartas = self._extraer_cartas_de_mano(mano_str)
+
+        x_pos = 20
+        for idx, carta_str in enumerate(cartas):
+            foto = self._load_card_image(self._get_image_name(carta_str))
+            if foto:
+                # Guardar referencia para que no sea removida por garbage collection
+                if not hasattr(self, 'dealer_photos'):
+                    self.dealer_photos = []
+                self.dealer_photos.append(foto)
+                self.dealer_canvas.create_image(x_pos, 50, image=foto, anchor="nw")
+                x_pos += 100
+
+    def _update_ranking(self, ranking):
+        """Actualiza la tabla de ranking."""
+        self.ranking_text.config(state="normal")
+        self.ranking_text.delete(1.0, tk.END)
+
         if ranking:
-            ranking_lines = "RANKING (por dinero):\n"
-            pos = 1
-            for item in ranking:
-                ranking_lines += f"{pos}. {item['nombre']} - ${item['dinero']}\n"
-                pos += 1
-            ranking_lines += "\n" + ("="*40) + "\n\n"
-            self.players_text.insert(tk.END, ranking_lines)
+            content = ""
+            for idx, item in enumerate(ranking, 1):
+                nombre = item["nombre"]
+                dinero = item["dinero"]
+                medal = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else f"{idx}."
+                content += f"{medal} {nombre:<15}\n     ${dinero:>6}\n\n"
+            self.ranking_text.insert(1.0, content)
+        else:
+            self.ranking_text.insert(1.0, "Esperando jugadores...")
 
-        for pid, player in estado["jugadores"].items():
+        self.ranking_text.config(state="disabled")
 
-            marker = "← TÚ" if int(pid) == self.player_id else ""
+    def _update_players_cards(self, jugadores):
+        """Actualiza la visualización de cartas de los jugadores."""
+        self.players_canvas.delete("all")
 
-            info = (
-                f"{player['nombre']} {marker}\n"
-                f"Cartas: {player['mano']}\n"
-                f"Estado: {player['estado']}\n"
-                f"Apuesta: ${player['apuesta']}\n"
-                f"Dinero: ${player['dinero']}\n"
-                f"{'-'*40}\n"
-            )
+        y_pos = 10
+        for pid, player in jugadores.items():
+            is_current = int(pid) == self.player_id
 
-            self.players_text.insert(tk.END, info)
+            # Nombre del jugador
+            nombre_color = "#00FF00" if is_current else "#FFFFFF"
+            titulo = f"{'→ ' if is_current else ''}{player['nombre']}"
+            self.players_canvas.create_text(10, y_pos, text=titulo, anchor="nw", fill=nombre_color, font=("Arial", 11, "bold"))
+
+            # Estado y dinero
+            estado_color = self._get_estado_color(player['estado'])
+            info = f"Cartas | Estado: {player['estado']} | Apuesta: ${player['apuesta']} | Dinero: ${player['dinero']}"
+            self.players_canvas.create_text(10, y_pos + 25, text=info, anchor="nw", fill="white", font=("Courier", 9))
+
+            # Cartas del jugador (mostrar miniaturas)
+            mano_str = player.get("mano", "")
+            cartas = self._extraer_cartas_de_mano(mano_str)
+
+            x_card = 10
+            for carta_str in cartas[:5]:  # Máximo 5 cartas visibles
+                foto = self._load_card_image(self._get_image_name(carta_str), width=50, height=75)
+                if foto:
+                    if not hasattr(self, 'player_photos'):
+                        self.player_photos = []
+                    self.player_photos.append(foto)
+                    self.players_canvas.create_image(x_card, y_pos + 50, image=foto, anchor="nw")
+                    x_card += 55
+
+            y_pos += 145
+
+        # Ajustar altura del canvas
+        self.players_canvas.config(height=max(145 * len(jugadores), 300))
+
+    def _extraer_cartas_de_mano(self, mano_str):
+        """Extrae las cartas de la cadena 'A♠, K♥, 5♦ (Valor: XX)'."""
+        if not mano_str or "(Valor:" not in mano_str:
+            return []
+        # Extractar la parte antes de "(Valor:"
+        parte_cartas = mano_str.split("(Valor:")[0].strip()
+        # Dividir por ", "
+        cartas = [c.strip() for c in parte_cartas.split(",")]
+        return cartas
+
+    def _get_image_name(self, carta_str):
+        """Convierte un string de carta (ej: 'A♠') al nombre del archivo de imagen."""
+        if not carta_str:
+            return "back.png"
+
+        # Mapeos
+        palo_map = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
+        valor_map = {'A': 'ace', 'J': 'jack', 'Q': 'queen', 'K': 'king'}
+
+        valor = carta_str[0]
+        palo_char = carta_str[-1]
+
+        valor_str = valor_map.get(valor, valor)
+        palo_str = palo_map.get(palo_char, 'unknown')
+
+        return f"{valor_str}_of_{palo_str}.png"
+
+    def _get_estado_color(self, estado):
+        """Retorna el color según el estado del jugador."""
+        colores = {
+            'jugando': '#FFFF00',
+            'plantado': '#00FF00',
+            'busted': '#FF0000',
+            'ganador': '#00FF00',
+            'perdedor': '#FF0000',
+            'empate': '#FFFF00',
+            'esperando': '#FFFFFF'
+        }
+        return colores.get(estado, '#FFFFFF')
 
     # =========================
     # ACCIONES
