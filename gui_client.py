@@ -15,6 +15,7 @@ class BlackjackGUI:
         self.socket = None
         self.connected = False
         self.player_id = None
+        self.recv_buffer = ""
 
         self.root = tk.Tk()
         self.root.title("♠ BLACKJACK MULTIJUGADOR ♠")
@@ -256,9 +257,21 @@ class BlackjackGUI:
 
             self.socket.send(json.dumps(register).encode())
 
-            response = json.loads(
-                self.socket.recv(1024).decode()
-            )
+            # Leer hasta terminador '\n' para obtener JSON completo
+            response = None
+            # Intentar recibir datos hasta encontrar '\n'
+            while True:
+                chunk = self.socket.recv(1024).decode()
+                if not chunk:
+                    break
+                self.recv_buffer += chunk
+                if '\n' in self.recv_buffer:
+                    line, self.recv_buffer = self.recv_buffer.split('\n', 1)
+                    try:
+                        response = json.loads(line)
+                    except json.JSONDecodeError:
+                        response = None
+                    break
 
             self.player_id = response["id_jugador"]
 
@@ -288,9 +301,18 @@ class BlackjackGUI:
                 if not data:
                     break
 
-                message = json.loads(data)
+                self.recv_buffer += data
 
-                self.process_message(message)
+                # Procesar todas las líneas completas (cada línea es un JSON)
+                while '\n' in self.recv_buffer:
+                    linea, self.recv_buffer = self.recv_buffer.split('\n', 1)
+                    if not linea.strip():
+                        continue
+                    try:
+                        message = json.loads(linea)
+                        self.process_message(message)
+                    except json.JSONDecodeError:
+                        self.log('Error decodificando JSON recibido')
 
             except Exception as e:
                 self.log(f"Error: {e}")

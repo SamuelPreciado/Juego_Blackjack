@@ -5,7 +5,6 @@ Gestiona las conexiones de clientes y la lógica del juego
 import socket
 import threading
 import json
-import time
 from game import Juego
 
 
@@ -78,13 +77,13 @@ class ServidorBlackjack:
 
             print(f"Jugador '{nombre}' registrado (ID: {id_jugador})")
 
-            # Enviar confirmación de registro
+            # Enviar confirmación de registro (usar terminador '\n' para framing)
             respuesta = {
                 'tipo': 'registro_confirmado',
                 'id_jugador': id_jugador,
                 'mensaje': f'Bienvenido {nombre}'
             }
-            cliente_socket.send(json.dumps(respuesta).encode('utf-8'))
+            self._send_json(cliente_socket, respuesta)
 
             # Bucle principal de comunicación
             while self.running:
@@ -94,13 +93,16 @@ class ServidorBlackjack:
                     break
 
                 try:
+                    # Es posible que el recv() traiga múltiples objetos JSON; manejamos eso
+                    # pero aquí asumimos que el cliente envía un único mensaje por línea.
                     mensaje = json.loads(datos)
                     self.procesar_mensaje(id_jugador, mensaje)
                 except json.JSONDecodeError:
                     print(f"Error decodificando mensaje de {nombre}")
 
         except Exception as e:
-            print(f"Error con cliente {nombre}: {e}")
+            cliente_ref = nombre if 'nombre' in locals() and nombre is not None else direccion
+            print(f"Error con cliente {cliente_ref}: {e}")
         finally:
             with self.lock:
                 if id_conexion in self.clientes:
@@ -191,7 +193,7 @@ class ServidorBlackjack:
                 }
 
                 try:
-                    cliente_info['socket'].send(json.dumps(respuesta).encode('utf-8'))
+                    self._send_json(cliente_info['socket'], respuesta)
                 except:
                     pass
 
@@ -214,7 +216,7 @@ class ServidorBlackjack:
 
         for cliente_info in self.clientes.values():
             try:
-                cliente_info['socket'].send(json.dumps(respuesta).encode('utf-8'))
+                self._send_json(cliente_info['socket'], respuesta)
             except:
                 pass
 
@@ -227,7 +229,7 @@ class ServidorBlackjack:
                     'mensaje': mensaje_error
                 }
                 try:
-                    cliente_info['socket'].send(json.dumps(respuesta).encode('utf-8'))
+                    self._send_json(cliente_info['socket'], respuesta)
                 except:
                     pass
                 break
@@ -243,10 +245,19 @@ class ServidorBlackjack:
         for cliente_info in self.clientes.values():
             if cliente_info['id_jugador'] == id_jugador:
                 try:
-                    cliente_info['socket'].send(json.dumps(respuesta).encode('utf-8'))
+                    self._send_json(cliente_info['socket'], respuesta)
                 except:
                     pass
                 break
+
+    def _send_json(self, sock, obj):
+        """Envía un objeto JSON terminado en '\n' para que el receptor pueda separar mensajes."""
+        try:
+            data = json.dumps(obj) + "\n"
+            sock.send(data.encode('utf-8'))
+        except Exception:
+            # Si falla el envío, ignoramos para no romper el servidor
+            pass
 
     def cerrar(self):
         """Cierra el servidor"""

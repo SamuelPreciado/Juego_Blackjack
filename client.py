@@ -4,7 +4,7 @@ Cliente Blackjack - Interfaz para que los jugadores se conecten y jueguen
 import socket
 import json
 import threading
-import sys
+
 
 
 class ClienteBlackjack:
@@ -16,6 +16,7 @@ class ClienteBlackjack:
         self.nombre = None
         self.conectado = False
         self.estado_juego = None
+        self._recv_buffer = ""
 
     def conectar(self, nombre):
         """Conecta al servidor"""
@@ -33,8 +34,9 @@ class ClienteBlackjack:
             self.socket.send(json.dumps(mensaje).encode('utf-8'))
 
             # Recibir confirmación
-            datos = self.socket.recv(1024).decode('utf-8')
-            respuesta = json.loads(datos)
+            # Leer hasta el terminador '\n' para obtener un JSON completo
+            datos = self._recv_line()
+            respuesta = json.loads(datos) if datos else None
 
             if respuesta['tipo'] == 'registro_confirmado':
                 self.id_jugador = respuesta['id_jugador']
@@ -58,12 +60,22 @@ class ClienteBlackjack:
         """Recibe mensajes del servidor"""
         while self.conectado:
             try:
+                # Leer líneas terminadas en '\n' y procesar cada JSON por separado
                 datos = self.socket.recv(1024).decode('utf-8')
                 if not datos:
                     break
 
-                mensaje = json.loads(datos)
-                self.procesar_mensaje_servidor(mensaje)
+                self._recv_buffer += datos
+
+                while '\n' in self._recv_buffer:
+                    linea, self._recv_buffer = self._recv_buffer.split('\n', 1)
+                    if not linea.strip():
+                        continue
+                    try:
+                        mensaje = json.loads(linea)
+                        self.procesar_mensaje_servidor(mensaje)
+                    except json.JSONDecodeError:
+                        print("Error decodificando JSON recibido")
 
             except Exception as e:
                 if self.conectado:
@@ -146,6 +158,24 @@ class ClienteBlackjack:
             'tipo': 'plantarse'
         }
         self.socket.send(json.dumps(mensaje).encode('utf-8'))
+
+    def _recv_line(self):
+        """Lee desde el socket hasta encontrar '\n' y devuelve la línea (sin '\n').
+        Este método utiliza self._recv_buffer para acumular datos entre llamadas."""
+        # Intentar ver si ya hay una línea completa en el buffer
+        if '\n' in self._recv_buffer:
+            linea, self._recv_buffer = self._recv_buffer.split('\n', 1)
+            return linea
+
+        # De lo contrario, leer desde el socket hasta obtener '\n'
+        while True:
+            datos = self.socket.recv(1024).decode('utf-8')
+            if not datos:
+                return None
+            self._recv_buffer += datos
+            if '\n' in self._recv_buffer:
+                linea, self._recv_buffer = self._recv_buffer.split('\n', 1)
+                return linea
 
     def solicitar_nueva_ronda(self):
         """Solicita una nueva ronda"""
