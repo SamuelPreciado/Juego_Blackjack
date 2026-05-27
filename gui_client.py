@@ -234,6 +234,7 @@ class BlackjackGUI:
         )
         self.log_text.pack(fill="x")
 
+<<<<<<< HEAD
         self.log_text.config(state="disabled")
 
     # =========================
@@ -424,6 +425,8 @@ class BlackjackGUI:
         )
         self.log_text.pack(fill="x")
 
+=======
+>>>>>>> 4641bf05b068cb0d7898b40062c92c92cc741bad
         self.log_text.config(state="disabled")
 
     # =========================
