@@ -22,7 +22,9 @@ class BlackjackGUI:
         self.root = tk.Tk()
         self.root.title("♠ BLACKJACK MULTIJUGADOR ♠")
         self.root.geometry("1400x900")
-        self.root.configure(bg="#1a1a1a")
+
+        # 🔥 CAMBIO VISUAL: tema claro
+        self.root.configure(bg="#f5f6fa")
 
         self.create_widgets()
 
@@ -31,127 +33,397 @@ class BlackjackGUI:
     # =========================
 
     def create_widgets(self):
-        # Ruta de las cartas
+
         self.cartas_path = os.path.join(os.path.dirname(__file__), "cartas")
 
         # ======================
-        # PANEL CONEXIÓN
+        # TOP BAR
         # ======================
-        top_frame = tk.Frame(self.root, bg="#1a1a1a")
-        top_frame.pack(fill="x", padx=0, pady=0)
+        top_frame = tk.Frame(self.root, bg="#ffffff")
+        top_frame.pack(fill="x")
 
         title = tk.Label(
             top_frame,
             text="♠ BLACKJACK MULTIJUGADOR ♠",
-            bg="#1a1a1a",
-            fg="#FFD700",
+            bg="#ffffff",
+            fg="#2c3e50",
             font=("Arial", 22, "bold")
         )
         title.pack(pady=15)
 
-        # Panel de conexión
-        conn_frame = tk.Frame(top_frame, bg="#1a1a1a")
-        conn_frame.pack()
+        # ======================
+        # CONEXIÓN
+        # ======================
+        conn_frame = tk.Frame(self.root, bg="#ffffff")
+        conn_frame.pack(pady=5)
 
-        tk.Label(conn_frame, text="Servidor:", bg="#1a1a1a", fg="white", font=("Arial", 11)).pack(side="left", padx=8)
-        self.host_entry = tk.Entry(conn_frame, font=("Arial", 10), width=15)
+        tk.Label(conn_frame, text="Servidor:", bg="#ffffff", fg="#2c3e50").pack(side="left", padx=8)
+
+        self.host_entry = tk.Entry(
+            conn_frame,
+            font=("Arial", 10),
+            width=15,
+            bg="#ecf0f1",
+            relief="flat"
+        )
         self.host_entry.insert(0, "localhost")
         self.host_entry.pack(side="left", padx=5)
 
-        tk.Label(conn_frame, text="Nombre:", bg="#1a1a1a", fg="white", font=("Arial", 11)).pack(side="left", padx=15)
-        self.name_entry = tk.Entry(conn_frame, font=("Arial", 10), width=15)
+        tk.Label(conn_frame, text="Nombre:", bg="#ffffff", fg="#2c3e50").pack(side="left", padx=15)
+
+        self.name_entry = tk.Entry(
+            conn_frame,
+            font=("Arial", 10),
+            width=15,
+            bg="#ecf0f1",
+            relief="flat"
+        )
         self.name_entry.pack(side="left", padx=5)
 
         self.connect_btn = tk.Button(
             conn_frame,
             text="Conectar",
-            bg="#FF6B35",
-            fg="blue",
+            bg="#3498db",
+            fg="white",
             font=("Arial", 11, "bold"),
-            command=self.connect,
+            relief="flat",
             padx=15,
             pady=5,
-            relief="raised",
-            bd=2
+            command=self.connect
         )
         self.connect_btn.pack(side="left", padx=10)
 
         # ======================
-        # ÁREA PRINCIPAL DE JUEGO
+        # ÁREA PRINCIPAL
         # ======================
-        game_frame = tk.Frame(self.root, bg="#0b3d0b")
-        game_frame.pack(fill="both", expand=True, padx=0, pady=0)
+        game_frame = tk.Frame(self.root, bg="#f5f6fa")
+        game_frame.pack(fill="both", expand=True)
 
         # --- CRUPIER ---
-        dealer_frame = tk.Frame(game_frame, bg="#0b3d0b")
-        dealer_frame.pack(fill="x", padx=20, pady=15)
+        dealer_frame = tk.Frame(game_frame, bg="#ffffff")
+        dealer_frame.pack(fill="x", padx=20, pady=10)
 
-        tk.Label(dealer_frame, text="CRUPIER", bg="#0b3d0b", fg="#FFD700", font=("Arial", 14, "bold")).pack(anchor="w")
+        tk.Label(
+            dealer_frame,
+            text="CRUPIER",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 14, "bold")
+        ).pack(anchor="w")
 
-        self.dealer_canvas = tk.Canvas(dealer_frame, bg="#0b3d0b", highlightthickness=0, height=200)
+        self.dealer_canvas = tk.Canvas(
+            dealer_frame,
+            bg="#ffffff",
+            highlightthickness=0,
+            height=200
+        )
         self.dealer_canvas.pack(fill="x", pady=10)
 
-        self.dealer_info = tk.Label(dealer_frame, text="", bg="#0b3d0b", fg="white", font=("Arial", 11))
+        self.dealer_info = tk.Label(
+            dealer_frame,
+            text="",
+            bg="#ffffff",
+            fg="#2c3e50"
+        )
         self.dealer_info.pack(anchor="w")
 
-        # --- JUGADORES Y RANKING ---
-        center_frame = tk.Frame(game_frame, bg="#0b3d0b")
-        center_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        # ======================
+        # CENTRO
+        # ======================
+        center_frame = tk.Frame(game_frame, bg="#f5f6fa")
+        center_frame.pack(fill="both", expand=True, padx=20)
 
-        # Ranking a la izquierda
-        ranking_frame = tk.Frame(center_frame, bg="#1a1a1a", relief="ridge", bd=2)
-        ranking_frame.pack(side="left", fill="y", padx=(0, 15))
+        # RANKING
+        ranking_frame = tk.Frame(center_frame, bg="#ffffff", relief="flat")
+        ranking_frame.pack(side="left", fill="y", padx=10)
 
-        tk.Label(ranking_frame, text="RANKING", bg="#1a1a1a", fg="#FFD700", font=("Arial", 12, "bold")).pack(pady=8)
-        self.ranking_text = tk.Text(ranking_frame, height=20, width=25, bg="#2d2d2d", fg="#00FF00", font=("Courier", 10))
-        self.ranking_text.pack(fill="both", expand=True, padx=5, pady=5)
-        self.ranking_text.config(state="disabled")
+        tk.Label(
+            ranking_frame,
+            text="RANKING",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 12, "bold")
+        ).pack(pady=8)
 
-        # Jugadores a la derecha
-        players_frame = tk.Frame(center_frame, bg="#0b3d0b", relief="ridge", bd=2)
+        self.ranking_text = tk.Text(
+            ranking_frame,
+            height=20,
+            width=25,
+            bg="#ecf0f1",
+            fg="#2c3e50",
+            font=("Courier", 10),
+            relief="flat"
+        )
+        self.ranking_text.pack()
+
+        # JUGADORES
+        players_frame = tk.Frame(center_frame, bg="#ffffff")
         players_frame.pack(side="left", fill="both", expand=True)
 
-        tk.Label(players_frame, text="JUGADORES", bg="#0b3d0b", fg="#FFD700", font=("Arial", 12, "bold")).pack(pady=8)
-        self.players_canvas = tk.Canvas(players_frame, bg="#0b3d0b", highlightthickness=0)
-        self.players_canvas.pack(fill="both", expand=True, padx=5, pady=5)
+        tk.Label(
+            players_frame,
+            text="JUGADORES",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 12, "bold")
+        ).pack(pady=8)
 
-        # --- CONTROLES ---
-        control_frame = tk.Frame(self.root, bg="#1a1a1a")
+        self.players_canvas = tk.Canvas(
+            players_frame,
+            bg="#ffffff",
+            highlightthickness=0
+        )
+        self.players_canvas.pack(fill="both", expand=True)
+
+        # ======================
+        # CONTROLES
+        # ======================
+        control_frame = tk.Frame(self.root, bg="#ffffff")
         control_frame.pack(fill="x", padx=20, pady=10)
 
-        tk.Label(control_frame, text="Apuesta:", bg="#1a1a1a", fg="white", font=("Arial", 11)).pack(side="left", padx=5)
-        self.bet_entry = tk.Entry(control_frame, font=("Arial", 11), width=8)
+        tk.Label(control_frame, text="Apuesta:", bg="#ffffff", fg="#2c3e50").pack(side="left")
+
+        self.bet_entry = tk.Entry(
+            control_frame,
+            width=10,
+            bg="#ecf0f1",
+            relief="flat"
+        )
         self.bet_entry.pack(side="left", padx=5)
 
-        button_configs = [
-            ("Apostar", self.make_bet, "#FF6B35"),
-            ("Pedir Carta", self.hit, "#4ECDC4"),
-            ("Plantarse", self.stand, "#FF6348"),
-            ("Nueva Ronda", self.new_round, "#95E1D3")
+        buttons = [
+            ("Apostar", self.make_bet, "#27ae60"),
+            ("Pedir", self.hit, "#3498db"),
+            ("Plantarse", self.stand, "#e67e22"),
+            ("Nueva Ronda", self.new_round, "#9b59b6")
         ]
 
-        for text, cmd, color in button_configs:
-            btn = tk.Button(
+        for text, cmd, color in buttons:
+            tk.Button(
                 control_frame,
                 text=text,
                 command=cmd,
                 bg=color,
-                fg="blue",
-                font=("Arial", 10, "bold"),
+                fg="white",
+                relief="flat",
                 padx=12,
-                pady=6,
-                relief="raised",
-                bd=2
-            )
-            btn.pack(side="left", padx=5)
+                pady=5
+            ).pack(side="left", padx=5)
 
-        # --- LOG ---
-        log_frame = tk.Frame(self.root, bg="#1a1a1a", relief="ridge", bd=2)
+        # ======================
+        # LOG
+        # ======================
+        log_frame = tk.Frame(self.root, bg="#ffffff")
         log_frame.pack(fill="x", padx=20, pady=10)
 
-        tk.Label(log_frame, text="EVENTOS", bg="#1a1a1a", fg="#FFD700", font=("Arial", 11, "bold")).pack(anchor="w", padx=5, pady=5)
-        self.log_text = tk.Text(log_frame, height=6, bg="#000000", fg="#00FF00", font=("Courier", 9))
-        self.log_text.pack(fill="x", padx=5, pady=5)
+        tk.Label(
+            log_frame,
+            text="EVENTOS",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 11, "bold")
+        ).pack(anchor="w")
+
+        self.log_text = tk.Text(
+            log_frame,
+            height=6,
+            bg="#ecf0f1",
+            fg="#2c3e50",
+            font=("Courier", 9),
+            relief="flat"
+        )
+        self.log_text.pack(fill="x")
+
+        self.log_text.config(state="disabled")
+
+    # =========================
+    # LOG
+    # =========================
+
+    def log(self, message):
+        self.log_text.config(state="normal")
+        self.log_text.insert(tk.END, f"{message}\n")
+        self.log_text.see(tk.END)
+        self.log_text.config(state="disabled")
+
+    # =========================
+    # CONEXIÓN
+    # =========================
+    # (resto del código sigue igual que el tuyo original)
+
+        # ======================
+        # CONEXIÓN
+        # ======================
+        conn_frame = tk.Frame(self.root, bg="#ffffff")
+        conn_frame.pack(pady=5)
+
+        tk.Label(conn_frame, text="Servidor:", bg="#ffffff", fg="#2c3e50").pack(side="left", padx=8)
+
+        self.host_entry = tk.Entry(conn_frame, font=("Arial", 10), width=15,
+                                    bg="#ecf0f1", relief="flat")
+        self.host_entry.insert(0, "localhost")
+        self.host_entry.pack(side="left", padx=5)
+
+        tk.Label(conn_frame, text="Nombre:", bg="#ffffff", fg="#2c3e50").pack(side="left", padx=15)
+
+        self.name_entry = tk.Entry(conn_frame, font=("Arial", 10), width=15,
+                                bg="#ecf0f1", relief="flat")
+        self.name_entry.pack(side="left", padx=5)
+
+        self.connect_btn = tk.Button(
+            conn_frame,
+            text="Conectar",
+            bg="#3498db",
+            fg="white",
+            font=("Arial", 11, "bold"),
+            relief="flat",
+            padx=15,
+            pady=5,
+            command=self.connect
+        )
+        self.connect_btn.pack(side="left", padx=10)
+
+        # ======================
+        # ÁREA PRINCIPAL
+        # ======================
+        game_frame = tk.Frame(self.root, bg="#f5f6fa")
+        game_frame.pack(fill="both", expand=True)
+
+        # --- CRUPIER ---
+        dealer_frame = tk.Frame(game_frame, bg="#ffffff")
+        dealer_frame.pack(fill="x", padx=20, pady=10)
+
+        tk.Label(
+            dealer_frame,
+            text="CRUPIER",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 14, "bold")
+        ).pack(anchor="w")
+
+        self.dealer_canvas = tk.Canvas(
+            dealer_frame,
+            bg="#ffffff",
+            highlightthickness=0,
+            height=200
+        )
+        self.dealer_canvas.pack(fill="x", pady=10)
+
+        self.dealer_info = tk.Label(
+            dealer_frame,
+            text="",
+            bg="#ffffff",
+            fg="#2c3e50"
+        )
+        self.dealer_info.pack(anchor="w")
+
+        # ======================
+        # CENTRO
+        # ======================
+        center_frame = tk.Frame(game_frame, bg="#f5f6fa")
+        center_frame.pack(fill="both", expand=True, padx=20)
+
+        # RANKING
+        ranking_frame = tk.Frame(center_frame, bg="#ffffff", relief="flat")
+        ranking_frame.pack(side="left", fill="y", padx=10)
+
+        tk.Label(
+            ranking_frame,
+            text="RANKING",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 12, "bold")
+        ).pack(pady=8)
+
+        self.ranking_text = tk.Text(
+            ranking_frame,
+            height=20,
+            width=25,
+            bg="#ecf0f1",
+            fg="#2c3e50",
+            font=("Courier", 10),
+            relief="flat"
+        )
+        self.ranking_text.pack()
+
+        # JUGADORES
+        players_frame = tk.Frame(center_frame, bg="#ffffff")
+        players_frame.pack(side="left", fill="both", expand=True)
+
+        tk.Label(
+            players_frame,
+            text="JUGADORES",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 12, "bold")
+        ).pack(pady=8)
+
+        self.players_canvas = tk.Canvas(
+            players_frame,
+            bg="#ffffff",
+            highlightthickness=0
+        )
+        self.players_canvas.pack(fill="both", expand=True)
+
+        # ======================
+        # CONTROLES
+        # ======================
+        control_frame = tk.Frame(self.root, bg="#ffffff")
+        control_frame.pack(fill="x", padx=20, pady=10)
+
+        tk.Label(control_frame, text="Apuesta:", bg="#ffffff", fg="#2c3e50").pack(side="left")
+
+        self.bet_entry = tk.Entry(
+            control_frame,
+            width=10,
+            bg="#ecf0f1",
+            relief="flat"
+        )
+        self.bet_entry.pack(side="left", padx=5)
+
+        buttons = [
+            ("Apostar", self.make_bet, "#27ae60"),
+            ("Pedir", self.hit, "#3498db"),
+            ("Plantarse", self.stand, "#e67e22"),
+            ("Nueva Ronda", self.new_round, "#9b59b6")
+        ]
+
+        for text, cmd, color in buttons:
+            tk.Button(
+                control_frame,
+                text=text,
+                command=cmd,
+                bg=color,
+                fg="white",
+                relief="flat",
+                padx=12,
+                pady=5
+            ).pack(side="left", padx=5)
+
+        # ======================
+        # LOG
+        # ======================
+        log_frame = tk.Frame(self.root, bg="#ffffff")
+        log_frame.pack(fill="x", padx=20, pady=10)
+
+        tk.Label(
+            log_frame,
+            text="EVENTOS",
+            bg="#ffffff",
+            fg="#2c3e50",
+            font=("Arial", 11, "bold")
+        ).pack(anchor="w")
+
+        self.log_text = tk.Text(
+            log_frame,
+            height=6,
+            bg="#ecf0f1",
+            fg="#2c3e50",
+            font=("Courier", 9),
+            relief="flat"
+        )
+        self.log_text.pack(fill="x")
+
         self.log_text.config(state="disabled")
 
     # =========================
@@ -364,8 +636,8 @@ class BlackjackGUI:
 
             # Estado y dinero
             estado_color = self._get_estado_color(player['estado'])
-            info = f"Cartas | Estado: {player['estado']} | Apuesta: ${player['apuesta']} | Dinero: ${player['dinero']}"
-            self.players_canvas.create_text(10, y_pos + 25, text=info, anchor="nw", fill="white", font=("Courier", 9))
+            info = f"Valor: {player['valor']} | Estado: {player['estado']} | Apuesta: ${player['apuesta']} | Dinero: ${player['dinero']}"
+            self.players_canvas.create_text(10, y_pos + 25, text=info, anchor="nw", fill="black", font=("Courier", 9))
 
             # Cartas del jugador (mostrar miniaturas)
             mano_str = player.get("mano", "")
